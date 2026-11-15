@@ -3,6 +3,7 @@ import { Calendar, ChevronLeft, ChevronRight, Download, Dumbbell, Sparkles } fro
 import { ActivationPanel } from './components/ActivationPanel';
 import { RestTimerBar } from './components/RestTimerBar';
 import { StrengthPanel } from './components/StrengthPanel';
+import { StrengthProgressionChart } from './components/StrengthProgressionChart';
 import {
   DAILY_ACTIVATION,
   MS_PER_DAY,
@@ -83,12 +84,13 @@ export default function App() {
   const [logsStore, setLogsStore] = useState<LogsStore>(loadInitialLogs);
   const [confirmClear, setConfirmClear] = useState(false);
 
-  // Rest timer state
-  const [timerSeconds, setTimerSeconds] = useState<number>(60);
-  const [lastPresetSeconds, setLastPresetSeconds] = useState<number>(60);
+  // Rest timer state with millisecond precision for smooth timeline
+  const [totalDurationMs, setTotalDurationMs] = useState<number>(60000);
+  const [remainingMs, setRemainingMs] = useState<number>(60000);
   const [timerRunning, setTimerRunning] = useState<boolean>(false);
   const [timerLabel, setTimerLabel] = useState<string>('Listo');
-  const timerIntervalRef = useRef<number | null>(null);
+  const endTimeRef = useRef<number | null>(null);
+  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     try {
@@ -108,37 +110,48 @@ export default function App() {
 
   useEffect(() => {
     if (!timerRunning) {
-      if (timerIntervalRef.current !== null) {
-        window.clearInterval(timerIntervalRef.current);
-        timerIntervalRef.current = null;
+      if (rafRef.current !== null) {
+        window.cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
       }
+      endTimeRef.current = null;
       return;
     }
 
-    timerIntervalRef.current = window.setInterval(() => {
-      setTimerSeconds((prev) => {
-        if (prev <= 1) {
-          setTimerRunning(false);
-          setTimerLabel('¡Listo!');
-          playFinishChime();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    endTimeRef.current = Date.now() + remainingMs;
+
+    const tick = () => {
+      if (endTimeRef.current === null) return;
+      const nextRemaining = Math.max(0, endTimeRef.current - Date.now());
+      setRemainingMs(nextRemaining);
+
+      if (nextRemaining <= 0) {
+        endTimeRef.current = null;
+        rafRef.current = null;
+        setTimerRunning(false);
+        setTimerLabel('¡Listo!');
+        playFinishChime();
+        return;
+      }
+
+      rafRef.current = window.requestAnimationFrame(tick);
+    };
+
+    rafRef.current = window.requestAnimationFrame(tick);
 
     return () => {
-      if (timerIntervalRef.current !== null) {
-        window.clearInterval(timerIntervalRef.current);
-        timerIntervalRef.current = null;
+      if (rafRef.current !== null) {
+        window.cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
       }
     };
   }, [timerRunning]);
 
   const handleStartTimer = useCallback((seconds: number, label: string, autoStart = true) => {
+    const durationMs = Math.max(1, seconds) * 1000;
     setTimerRunning(false);
-    setTimerSeconds(seconds);
-    setLastPresetSeconds(seconds);
+    setTotalDurationMs(durationMs);
+    setRemainingMs(durationMs);
     setTimerLabel(label);
     if (autoStart) {
       window.setTimeout(() => setTimerRunning(true), 0);
@@ -147,20 +160,29 @@ export default function App() {
 
   const handleToggleTimerRun = useCallback(() => {
     if (timerRunning) {
+      if (endTimeRef.current !== null) {
+        setRemainingMs(Math.max(0, endTimeRef.current - Date.now()));
+      }
       setTimerRunning(false);
       setTimerLabel('Pausado');
     } else {
-      setTimerSeconds((prev) => (prev <= 0 ? lastPresetSeconds : prev));
+      if (remainingMs <= 0) {
+        setRemainingMs(totalDurationMs);
+      }
       setTimerLabel('En curso');
       setTimerRunning(true);
     }
-  }, [timerRunning, lastPresetSeconds]);
+  }, [timerRunning, remainingMs, totalDurationMs]);
 
   const handleResetTimer = useCallback(() => {
     setTimerRunning(false);
-    setTimerSeconds(lastPresetSeconds);
+    setRemainingMs(totalDurationMs);
     setTimerLabel('Listo');
-  }, [lastPresetSeconds]);
+  }, [totalDurationMs]);
+
+  const timerSeconds = Math.ceil(remainingMs / 1000);
+  const totalSeconds = Math.round(totalDurationMs / 1000);
+  const timerProgress = totalDurationMs > 0 ? (totalDurationMs - remainingMs) / totalDurationMs : 0;
 
   const today = useMemo(() => getNormalizedDate(), []);
   const isToday = isSameCalendarDay(activeDate, today);
@@ -213,7 +235,7 @@ export default function App() {
     value: string
   ) => {
     setLogsStore((prev) => {
-      const existing = prev[dateKey] ?? { checks: {}, sets: {} };
+      const existing = prev[dateKey] ?? { week: selectedWeek, checks: {}, sets: {} };
       const currentSets = [...(existing.sets[exerciseId] ?? defaultTwoSets())];
       if (!currentSets[setIndex]) return prev;
       currentSets[setIndex] = { ...currentSets[setIndex], [field]: value };
@@ -221,6 +243,7 @@ export default function App() {
         ...prev,
         [dateKey]: {
           ...existing,
+          week: selectedWeek,
           sets: { ...existing.sets, [exerciseId]: currentSets },
         },
       };
@@ -234,7 +257,7 @@ export default function App() {
   ) => {
     let becameDone = false;
     setLogsStore((prev) => {
-      const existing = prev[dateKey] ?? { checks: {}, sets: {} };
+      const existing = prev[dateKey] ?? { week: selectedWeek, checks: {}, sets: {} };
       const currentSets = [...(existing.sets[exerciseId] ?? defaultTwoSets())];
       if (!currentSets[setIndex]) return prev;
       const nextDone = !currentSets[setIndex].done;
@@ -244,6 +267,7 @@ export default function App() {
         ...prev,
         [dateKey]: {
           ...existing,
+          week: selectedWeek,
           sets: { ...existing.sets, [exerciseId]: currentSets },
         },
       };
@@ -256,13 +280,14 @@ export default function App() {
 
   const handleAddExtraSet = (exerciseId: string) => {
     setLogsStore((prev) => {
-      const existing = prev[dateKey] ?? { checks: {}, sets: {} };
+      const existing = prev[dateKey] ?? { week: selectedWeek, checks: {}, sets: {} };
       const currentSets = [...(existing.sets[exerciseId] ?? defaultTwoSets())];
       currentSets.push({ reps: '', weight: '', done: false });
       return {
         ...prev,
         [dateKey]: {
           ...existing,
+          week: selectedWeek,
           sets: { ...existing.sets, [exerciseId]: currentSets },
         },
       };
@@ -271,7 +296,7 @@ export default function App() {
 
   const handleRemoveExtraSet = (exerciseId: string) => {
     setLogsStore((prev) => {
-      const existing = prev[dateKey] ?? { checks: {}, sets: {} };
+      const existing = prev[dateKey] ?? { week: selectedWeek, checks: {}, sets: {} };
       const currentSets = [...(existing.sets[exerciseId] ?? defaultTwoSets())];
       if (currentSets.length <= 2) return prev;
       currentSets.pop();
@@ -279,6 +304,7 @@ export default function App() {
         ...prev,
         [dateKey]: {
           ...existing,
+          week: selectedWeek,
           sets: { ...existing.sets, [exerciseId]: currentSets },
         },
       };
@@ -333,7 +359,7 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 pb-24">
+    <div className="min-h-screen bg-[#09090b] text-zinc-100 pb-28">
       <header className="border-b border-[#27272a] bg-[#09090b]">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-6">
           <a
@@ -580,6 +606,14 @@ export default function App() {
           />
         )}
 
+        <StrengthProgressionChart
+          logsStore={logsStore}
+          activeDate={activeDate}
+          selectedWeek={selectedWeek}
+          isWorkoutTab={activeMode === 'workout'}
+          onJumpToWorkout={() => setActiveMode('workout')}
+        />
+
         <div className="flex items-center justify-center pt-2 pb-4">
           {!confirmClear ? (
             <button
@@ -613,6 +647,8 @@ export default function App() {
 
       <RestTimerBar
         secondsLeft={timerSeconds}
+        totalSeconds={totalSeconds}
+        progress={timerProgress}
         isRunning={timerRunning}
         label={timerLabel}
         onSelectPreset={handleStartTimer}

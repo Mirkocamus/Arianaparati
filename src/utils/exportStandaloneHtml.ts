@@ -80,17 +80,26 @@ export function buildStandaloneHtml(): string {
   </main>
 
   <footer class="fixed bottom-0 inset-x-0 z-30 bg-[#141417]/95 backdrop-blur-md border-t border-[#27272a]">
-    <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
-      <div class="flex items-center gap-3">
-        <span id="timer-clock" class="mono-nums text-xl font-bold text-white">01:00</span>
-        <span id="timer-label" class="text-xs text-zinc-400 hidden sm:inline">Listo</span>
+    <div class="max-w-5xl mx-auto px-4 pt-2.5 pb-2 space-y-2">
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <span id="timer-clock" class="mono-nums text-xl font-bold text-white">01:00</span>
+          <span id="timer-label" class="text-xs text-zinc-400 hidden sm:inline">Listo</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button onclick="setTimer(30, 'Descanso 30s')" class="min-h-[38px] px-2.5 rounded-lg bg-[#09090b] border border-[#27272a] text-xs font-semibold text-zinc-300 hover:text-white">30s</button>
+          <button onclick="setTimer(45, 'Descanso 45s')" class="min-h-[38px] px-2.5 rounded-lg bg-[#09090b] border border-[#27272a] text-xs font-semibold text-zinc-300 hover:text-white">45s</button>
+          <button onclick="setTimer(60, 'Descanso 60s')" class="min-h-[38px] px-2.5 rounded-lg bg-[#09090b] border border-[#27272a] text-xs font-semibold text-zinc-300 hover:text-white">60s</button>
+          <button onclick="setTimer(90, 'Descanso 90s')" class="min-h-[38px] px-2.5 rounded-lg bg-[#09090b] border border-[#27272a] text-xs font-semibold text-zinc-300 hover:text-white">90s</button>
+          <button id="timer-toggle" onclick="toggleTimer()" class="min-h-[38px] px-4 rounded-xl bg-gradient-to-r from-red-600 to-pink-600 text-white text-xs font-bold">Iniciar</button>
+        </div>
       </div>
-      <div class="flex items-center gap-1.5">
-        <button onclick="setTimer(30, 'Descanso 30s')" class="min-h-[38px] px-2.5 rounded-lg bg-[#09090b] border border-[#27272a] text-xs font-semibold text-zinc-300 hover:text-white">30s</button>
-        <button onclick="setTimer(45, 'Descanso 45s')" class="min-h-[38px] px-2.5 rounded-lg bg-[#09090b] border border-[#27272a] text-xs font-semibold text-zinc-300 hover:text-white">45s</button>
-        <button onclick="setTimer(60, 'Descanso 60s')" class="min-h-[38px] px-2.5 rounded-lg bg-[#09090b] border border-[#27272a] text-xs font-semibold text-zinc-300 hover:text-white">60s</button>
-        <button onclick="setTimer(90, 'Descanso 90s')" class="min-h-[38px] px-2.5 rounded-lg bg-[#09090b] border border-[#27272a] text-xs font-semibold text-zinc-300 hover:text-white">90s</button>
-        <button id="timer-toggle" onclick="toggleTimer()" class="min-h-[38px] px-4 rounded-xl bg-gradient-to-r from-red-600 to-pink-600 text-white text-xs font-bold">Iniciar</button>
+      <div class="flex items-center gap-2.5">
+        <span id="timer-elapsed" class="mono-nums text-[10px] text-zinc-500 w-9">00:00</span>
+        <div class="flex-1 h-1.5 rounded-full bg-[#09090b] border border-[#27272a] overflow-hidden">
+          <div id="timer-bar" class="h-full w-full origin-left bg-gradient-to-r from-red-600 via-pink-500 to-rose-400 transition-transform duration-300" style="transform: scaleX(0)"></div>
+        </div>
+        <span id="timer-total" class="mono-nums text-[10px] text-zinc-500 w-9 text-right">01:00</span>
       </div>
     </div>
   </footer>
@@ -108,7 +117,7 @@ export function buildStandaloneHtml(): string {
     let activeMode = (activeDate.getDay() === 0) ? 'activation' : 'workout';
     let selectedWeek = Number(localStorage.getItem('ritmo_hogar_week') || 1);
     let store = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
-    let timerSec = 60, timerRunning = false, timerId = null;
+    let timerSec = 60, timerTotal = 60, timerRunning = false, timerId = null;
 
     function dateKey(d) {
       return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -159,12 +168,12 @@ export function buildStandaloneHtml(): string {
     }
 
     function setTimer(sec, label) {
-      clearInterval(timerId); timerRunning = false; timerSec = sec;
+      clearInterval(timerId); timerRunning = false; timerSec = sec; timerTotal = sec;
       document.getElementById('timer-label').textContent = label || 'Descanso';
       startTimer();
     }
     function startTimer() {
-      if (timerSec <= 0) timerSec = 60;
+      if (timerSec <= 0) { timerSec = timerTotal || 60; }
       timerRunning = true;
       updateClock();
       timerId = setInterval(() => {
@@ -181,10 +190,15 @@ export function buildStandaloneHtml(): string {
       if (timerRunning) { clearInterval(timerId); timerRunning = false; updateClock(); }
       else startTimer();
     }
+    function fmtClock(v) {
+      return String(Math.floor(v / 60)).padStart(2, '0') + ':' + String(v % 60).padStart(2, '0');
+    }
     function updateClock() {
-      const m = String(Math.floor(timerSec / 60)).padStart(2, '0');
-      const s = String(timerSec % 60).padStart(2, '0');
-      document.getElementById('timer-clock').textContent = m + ':' + s;
+      document.getElementById('timer-clock').textContent = fmtClock(timerSec);
+      document.getElementById('timer-elapsed').textContent = fmtClock(Math.max(0, timerTotal - timerSec));
+      document.getElementById('timer-total').textContent = fmtClock(timerTotal);
+      const ratio = timerTotal > 0 ? Math.max(0, Math.min(1, (timerTotal - timerSec) / timerTotal)) : 0;
+      document.getElementById('timer-bar').style.transform = 'scaleX(' + ratio + ')';
       document.getElementById('timer-toggle').textContent = timerRunning ? 'Pausar' : 'Iniciar';
     }
     function beep() {

@@ -39,6 +39,7 @@ export interface SetLog {
 }
 
 export interface DayLog {
+  week?: 1 | 2 | 3 | 4;
   checks: Record<string, boolean>;
   sets: Record<string, SetLog[]>;
 }
@@ -469,4 +470,117 @@ export function isNeckDay(dateObj: Date): boolean {
 export function isVacuumDay(dateObj: Date): boolean {
   const dayIdx = getMondayBasedDayIndex(dateObj);
   return dayIdx === 0 || dayIdx === 2 || dayIdx === 4; // Lunes, Miércoles, Viernes
+}
+
+export function parseWeightKg(rawWeight: string): number {
+  if (!rawWeight) return 0;
+  const normalized = rawWeight.replace(',', '.');
+  const match = normalized.match(/(\d+(?:\.\d+)?)/);
+  if (!match) return 0;
+  const parsed = Number.parseFloat(match[1]);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
+export function parseRepsCount(rawReps: string): number {
+  if (!rawReps) return 0;
+  const parsed = Number.parseInt(rawReps, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
+export function calculateDayTonnage(
+  dayLog: DayLog | undefined,
+  includeNeck = false
+): { totalKg: number; completedSets: number; totalReps: number } {
+  if (!dayLog || !dayLog.sets) {
+    return { totalKg: 0, completedSets: 0, totalReps: 0 };
+  }
+
+  let totalKg = 0;
+  let completedSets = 0;
+  let totalReps = 0;
+
+  for (const [exerciseId, setsArr] of Object.entries(dayLog.sets)) {
+    if (!includeNeck && exerciseId === NECK_EXERCISE.id) continue;
+    for (const setObj of setsArr) {
+      if (!setObj.done) continue;
+      completedSets += 1;
+      const reps = parseRepsCount(setObj.reps);
+      const kg = parseWeightKg(setObj.weight);
+      totalReps += reps;
+      totalKg += reps * kg;
+    }
+  }
+
+  return {
+    totalKg: Math.round(totalKg * 10) / 10,
+    completedSets,
+    totalReps,
+  };
+}
+
+export interface WeeklyChartDatum {
+  week: 1 | 2 | 3 | 4;
+  name: string;
+  totalKg: number;
+  completedSets: number;
+  totalReps: number;
+  targetLoad: string;
+}
+
+export function calculateWeeklyProgressionData(
+  logsStore: LogsStore,
+  fallbackWeek: 1 | 2 | 3 | 4
+): WeeklyChartDatum[] {
+  const buckets: Record<1 | 2 | 3 | 4, { totalKg: number; completedSets: number; totalReps: number }> = {
+    1: { totalKg: 0, completedSets: 0, totalReps: 0 },
+    2: { totalKg: 0, completedSets: 0, totalReps: 0 },
+    3: { totalKg: 0, completedSets: 0, totalReps: 0 },
+    4: { totalKg: 0, completedSets: 0, totalReps: 0 },
+  };
+
+  for (const dayLog of Object.values(logsStore)) {
+    const stats = calculateDayTonnage(dayLog, true);
+    if (stats.completedSets === 0 && stats.totalKg === 0) continue;
+    const assignedWeek = dayLog.week ?? fallbackWeek;
+    buckets[assignedWeek].totalKg += stats.totalKg;
+    buckets[assignedWeek].completedSets += stats.completedSets;
+    buckets[assignedWeek].totalReps += stats.totalReps;
+  }
+
+  return WEEK_GUIDES.map((guide) => ({
+    week: guide.week,
+    name: `Sem ${guide.week}`,
+    totalKg: Math.round(buckets[guide.week].totalKg * 10) / 10,
+    completedSets: buckets[guide.week].completedSets,
+    totalReps: buckets[guide.week].totalReps,
+    targetLoad: guide.suggestedKg,
+  }));
+}
+
+export interface DailyChartDatum {
+  day: string;
+  fullDay: string;
+  totalKg: number;
+  completedSets: number;
+  totalReps: number;
+}
+
+export function calculateCurrentWeekDailyData(
+  logsStore: LogsStore,
+  referenceDate: Date
+): DailyChartDatum[] {
+  const currentDayIdx = getMondayBasedDayIndex(referenceDate);
+
+  return STRENGTH_ROUTINE.map((dayObj, idx) => {
+    const dt = new Date(referenceDate.getTime() + (idx - currentDayIdx) * MS_PER_DAY);
+    const key = getDateKey(dt);
+    const stats = calculateDayTonnage(logsStore[key], true);
+    return {
+      day: dayObj.short,
+      fullDay: `${dayObj.name} ${dt.getDate()}`,
+      totalKg: stats.totalKg,
+      completedSets: stats.completedSets,
+      totalReps: stats.totalReps,
+    };
+  });
 }
