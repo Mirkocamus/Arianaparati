@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rutina en Casa · Estética Roja y Fucsia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Inter"', 'sans-serif'],
+                    },
+                    colors: {
+                        obsidian: '#09090b',
+                        surface: '#121215',
+                        borderDark: '#27272a',
+                        primaryRed: '#dc2626',
+                        accentPink: '#ec4899',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #09090b;
+            color: #f4f4f5;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+            50% { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
+        }
+        .timer-running {
+            animation: pulseGlow 1.8s infinite;
+        }
+    </style>
+</head>
+<body class="bg-[#09090b] text-zinc-100 antialiased selection:bg-red-500/30 selection:text-red-200 pb-28">
+
+    <!-- Cabecera Superior Fija -->
+    <header class="bg-[#09090b]/95 backdrop-blur-md border-b border-[#27272a] sticky top-0 z-30">
+        <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-red-600 to-pink-600 flex items-center justify-center text-white font-extrabold shadow-lg shadow-red-600/30">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-sm sm:text-base tracking-tight text-white leading-tight">Rutina en Casa · Mochila & Activación</h1>
+                    <p class="text-[11px] text-zinc-400 font-medium">Fuerza con Mochila + Hábitos Diarios</p>
+                </div>
+            </div>
+
+            <!-- Navegador de Fecha Real (Cálculo interdiario de cuello) -->
+            <div class="flex items-center gap-1.5 bg-[#121215] border border-[#27272a] rounded-xl px-2 py-1">
+                <button onclick="shiftDate(-1)" title="Día anterior" class="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <button onclick="resetToToday()" class="text-center px-1.5">
+                    <span id="current-date-label" class="block text-xs font-bold text-zinc-100 capitalize">Hoy</span>
+                    <span id="today-indicator" class="block text-[10px] text-pink-400 font-semibold">Fecha actual</span>
+                </button>
+                <button onclick="shiftDate(1)" title="Día siguiente" class="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Barra de Días de la Semana (Lunes a Domingo) -->
+        <div class="max-w-3xl mx-auto px-4 pb-2.5">
+            <div class="flex gap-1.5 overflow-x-auto no-scrollbar" id="day-tabs">
+                <!-- Renderizado por JS -->
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-4 pt-4 space-y-4">
+
+        <!-- Tarjeta de Estado del Día + Badge Interdiario de Cuello -->
+        <section class="bg-[#121215] border border-[#27272a] rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xl">
+            <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <h2 id="selected-day-title" class="text-lg font-extrabold text-white">Lunes</h2>
+                    <span id="selected-day-focus" class="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-red-950/80 text-red-300 border border-red-800/50">
+                        Piernas y Glúteos (Fuerza)
+                    </span>
+                </div>
+                <p id="day-subtitle-note" class="text-xs text-zinc-400 mt-1">
+                    Uso de mochila con libros (6–8 kg) · Método de 2 series principales
+                </p>
+            </div>
+
+            <!-- Badge Interdiario de Cuello calculado por fecha -->
+            <div id="neck-status-badge" class="shrink-0 px-3.5 py-2 rounded-xl border flex items-center gap-2.5">
+                <!-- Actualizado por JS -->
+            </div>
+        </section>
+
+        <!-- Selector Principal de 2 Opciones por Día -->
+        <section class="grid grid-cols-2 gap-2 bg-[#121215] p-1.5 rounded-2xl border border-[#27272a]">
+            <button id="tab-activation" onclick="switchMode('activation')" class="py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold transition-all flex items-center justify-center gap-2">
+                <span>✨ Opción 1: Hábitos & Activación</span>
+            </button>
+            <button id="tab-workout" onclick="switchMode('workout')" class="py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold transition-all flex items-center justify-center gap-2">
+                <span>🔥 Opción 2: Rutina de Fuerza</span>
+            </button>
+        </section>
+
+        <!-- Contenedor Dinámico de Contenido -->
+        <section id="main-content-area" class="space-y-4">
+            <!-- Renderizado por JS -->
+        </section>
+
+        <!-- Botón de reinicio de sesión del día -->
+        <div class="flex justify-center pt-2">
+            <button onclick="resetDayLogs()" class="text-xs font-medium text-zinc-500 hover:text-red-400 transition py-2 px-4 rounded-xl border border-transparent hover:border-[#27272a]">
+                Limpiar registros de esta fecha
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Temporizador Flotante Compacto (Estética Roja y Fucsia) -->
+    <div class="fixed bottom-0 inset-x-0 z-30 bg-[#121215]/95 backdrop-blur-md border-t border-[#27272a] shadow-2xl">
+        <div class="max-w-3xl mx-auto px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2">
+            <!-- Display de Tiempo -->
+            <div class="flex items-center gap-2.5">
+                <div id="timer-badge-icon" class="w-9 h-9 rounded-xl bg-zinc-900 border border-[#27272a] text-red-500 flex items-center justify-center shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M5 3 2 6"/><path d="m22 6-3-3"/></svg>
+                </div>
+                <div>
+                    <div class="flex items-baseline gap-1.5">
+                        <span id="timer-display" class="text-lg sm:text-xl font-extrabold tabular-nums text-white">00:30</span>
+                        <span id="timer-status-text" class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Listo</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones Rápidos (3s, 15s, 30s, 60s, 90s) + Play/Pause -->
+            <div class="flex items-center gap-1 sm:gap-1.5">
+                <button onclick="setQuickTimer(3, 'Sostén 3s')" class="px-2 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-[#27272a] text-zinc-300 text-xs font-bold transition">3s</button>
+                <button onclick="setQuickTimer(15, 'Vacuum 15s')" class="px-2 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-[#27272a] text-zinc-300 text-xs font-bold transition">15s</button>
+                <button onclick="setQuickTimer(30, 'Plancha 30s')" class="px-2 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-[#27272a] text-zinc-300 text-xs font-bold transition">30s</button>
+                <button onclick="setQuickTimer(60, 'Descanso 60s')" class="px-2 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-[#27272a] text-zinc-300 text-xs font-bold transition">60s</button>
+                <button onclick="setQuickTimer(90, 'Descanso 90s')" class="hidden sm:inline-block px-2 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-[#27272a] text-zinc-300 text-xs font-bold transition">90s</button>
+
+                <button id="timer-play-btn" onclick="toggleTimer()" class="ml-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-500 hover:to-pink-500 text-white text-xs font-extrabold transition shadow-md shadow-red-600/30">
+                    Iniciar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================================
+        // 1. ESTRUCTURA DE RUTINAS DE FUERZA (CON MOCHILA Y 2 SERIES PRINCIPALES)
+        // =========================================================================
+        const STRENGTH_ROUTINE = [
+            {
+                dayIndex: 0, // Lunes
+                name: "Lunes",
+                short: "Lun",
+                focus: "Piernas y Glúteos (Fuerza)",
+                note: "Uso de mochila con libros (6–8 kg). Semana 1 sin mochila para técnica; Semana 2+ con mochila.",
+                exercises: [
+                    { id: "lun-sent", name: "Sentadillas con mochila (6–8 kg)", target: "3 series × 10–15 reps", tip: "Espalda neutra, pecho abierto y bajada controlada." },
+                    { id: "lun-puen", name: "Puente de glúteo con mochila sobre la cadera", target: "3 series × 12–15 reps", tip: "Pausa de 2 segundos arriba apretando los glúteos." },
+                    { id: "lun-zanc", name: "Zancadas hacia atrás (alternas)", target: "3 series × 8–10 reps / pierna", tip: "Paso largo hacia atrás manteniendo el equilibrio." },
+                    { id: "lun-pant", name: "Elevación de talones de pie (pantorrillas)", target: "3 series × 15–20 reps", tip: "Estiramiento completo abajo y contracción arriba." }
+                ]
+            },
+            {
+                dayIndex: 1, // Martes
+                name: "Martes",
+                short: "Mar",
+                focus: "Pecho, Hombros y Core",
+                note: "Trabajo estético pectoral mediante flexiones inclinadas y planchas.",
+                exercises: [
+                    { id: "mar-flexi", name: "Flexiones inclinadas (manos en cama o mesa)", target: "3 series × 8–12 reps", tip: "Codos hacia atrás en ángulo de 45° respecto al torso." },
+                    { id: "mar-rod", name: "Flexiones con rodillas apoyadas", target: "3 series × 6–10 reps", tip: "Bajada lenta y controlada de 3 segundos." },
+                    { id: "mar-plan", name: "Plancha abdominal sobre antebrazos", target: "3 series × 30–45 s", tip: "Aprieta glúteos y abdomen para no arquear la zona lumbar." },
+                    { id: "mar-shld", name: "Plancha tocando hombros (Shoulder Taps)", target: "3 series × 10 toques / lado", tip: "Evita que las caderas se balanceen al levantar una mano." }
+                ]
+            },
+            {
+                dayIndex: 2, // Miércoles
+                name: "Miércoles",
+                short: "Mié",
+                focus: "Piernas y Glúteos (Unilateral)",
+                note: "Trabajo a una pierna para simetría y tono muscular profundo.",
+                exercises: [
+                    { id: "mie-bulg", name: "Sentadilla Búlgara (pie atrás en silla)", target: "3 series × 8–10 reps / pierna", tip: "Añadir mochila en semana 3–4 para mayor sobrecarga." },
+                    { id: "mie-puen1", name: "Puente de glúteo a una pierna", target: "3 series × 8–12 reps / pierna", tip: "Eleva la cadera apoyando el talón con firmeza." },
+                    { id: "mie-pmr", name: "Peso muerto rumano a una pierna (con mochila)", target: "3 series × 10–12 reps / pierna", tip: "Bisagra de cadera perfecta y espalda recta." },
+                    { id: "mie-abd", name: "Abducción de cadera acostada de lado", target: "3 series × 15 reps / lado", tip: "Eleva la pierna de arriba de forma controlada." }
+                ]
+            },
+            {
+                dayIndex: 3, // Jueves
+                name: "Jueves",
+                short: "Jue",
+                focus: "Espalda Postural y Abdomen",
+                note: "Corrección postural y fortalecimiento de cadena posterior.",
+                exercises: [
+                    { id: "jue-sup", name: "Supermans en el suelo", target: "3 series × 12–15 reps", tip: "Eleva simultáneamente pecho y piernas contrayendo la espalda." },
+                    { id: "jue-ytw", name: "Ángeles de nieve boca abajo (Y-T-W)", target: "3 series × 10 reps", tip: "Abre el pecho y activa la espalda alta." },
+                    { id: "jue-dbug", name: "Dead Bug (bicho muerto)", target: "3 series × 10 reps / lado", tip: "Zona lumbar pegada al suelo en todo momento." },
+                    { id: "jue-plat", name: "Plancha lateral", target: "2 series × 20–30 s / lado", tip: "Cadera elevada y alineada con los hombros." }
+                ]
+            },
+            {
+                dayIndex: 4, // Viernes
+                name: "Viernes",
+                short: "Vie",
+                focus: "Piernas y Glúteos (Bombeo / Volumen)",
+                note: "Sesión de alta congestión muscular para glúteos y cuádriceps.",
+                exercises: [
+                    { id: "vie-sumo", name: "Sentadilla Sumo con mochila", target: "3 series × 12–15 reps", tip: "Pies abiertos con puntas hacia afuera, mochila al pecho." },
+                    { id: "vie-puen3", name: "Puente de glúteo con mochila (pausa 3s)", target: "3 series × 12–15 reps", tip: "Mantén 3 segundos de isometría arriba en cada repetición." },
+                    { id: "vie-step", name: "Step-ups (subir a una silla firme)", target: "3 series × 10 reps / pierna", tip: "Empuja con el talón de la pierna que sube." },
+                    { id: "vie-wall", name: "Sentadilla isométrica en la pared (Wall Sit)", target: "2 series × 30–45 s", tip: "Muslos paralelos al suelo y espalda apoyada." }
+                ]
+            },
+            {
+                dayIndex: 5, // Sábado
+                name: "Sábado",
+                short: "Sáb",
+                focus: "Tren Superior y Glúteo Aislado",
+                note: "Combinación de pecho, espalda con mochila y aislamiento de glúteo.",
+                exercises: [
+                    { id: "sab-flex", name: "Flexiones inclinadas (bajada controlada)", target: "3 series × 10–12 reps", tip: "Control estricto en la fase excéntrica." },
+                    { id: "sab-remo", name: "Remo con mochila a un brazo", target: "3 series × 10–12 reps / brazo", tip: "Apoya una mano en la cama o silla y tracciona hacia la cadera." },
+                    { id: "sab-donk", name: "Patadas de glúteo en cuadrupedia (Donkey Kicks)", target: "3 series × 15 reps / pierna", tip: "Empuja la planta del pie hacia el techo contrayendo el glúteo." },
+                    { id: "sab-plan", name: "Plancha abdominal", target: "3 series × 30–45 s", tip: "Contracción abdominal máxima." }
+                ]
+            },
+            {
+                dayIndex: 6, // Domingo
+                name: "Domingo",
+                short: "Dom",
+                focus: "Descanso Activo",
+                note: "Día ideal para relajar el cuerpo con caminata y la Opción 1 de Hábitos Diarios.",
+                isRestDay: true,
+                exercises: []
+            }
+        ];
+
+        // =========================================================================
+        // 2. HÁBITOS DIARIOS, ACTIVACIÓN Y POSTURA (OPCIÓN 1)
+        // =========================================================================
+        const DAILY_ACTIVATION = {
+            face: [
+                { id: "act-cold", name: "Lavado con agua muy fría al despertar", meta: "Al despertar · Tono y desinflamación", timerSec: null },
+                { id: "act-mew", name: "Mewing todo el día (postura lingual)", meta: "Todo el día · Lengua pegada al paladar", timerSec: null },
+                { id: "act-brow", name: "Enfoque de cejas", meta: "2 × 20 reps · Control frontal", timerSec: null },
+                { id: "act-blink", name: "Parpadeo con resistencia", meta: "2 × 10–20 reps (3 s c/u)", timerSec: 3 },
+                { id: "act-smile", name: "Sonrisa forzada", meta: "10 × 3 s de sostén", timerSec: 3 },
+                { id: "act-kiss", name: "Beso con resistencia", meta: "2 × 15 reps", timerSec: null },
+                { id: "act-spoon", name: "Levantamiento de cuchara", meta: "Activación orbicular y mejillas", timerSec: null }
+            ],
+            posture: [
+                { id: "act-chin", name: "Chin tucks contra pared o puerta", meta: "Retracción cervical · Alineación de cuello", timerSec: 15 },
+                { id: "act-door", name: "Estiramiento de hombros y pecho en marco de puerta", meta: "Apertura pectoral · 30–45 s", timerSec: 30 },
+                { id: "act-thor", name: "Rotaciones torácicas", meta: "30 s por lado · Movilidad dorsal", timerSec: 30 },
+                { id: "act-cobra", name: "Postura de la cobra", meta: "1 min · Extensión torácica", timerSec: 60 },
+                { id: "act-shld", name: "Hombros por encima y por detrás", meta: "1 min · Movilidad escapular", timerSec: 60 },
+                { id: "act-angel", name: "Ángel invertido", meta: "1 min · Postura espalda alta", timerSec: 60 }
+            ]
+        };
+
+        // =========================================================================
+        // 3. CÁLCULO DE FECHA REAL E INTERDIARIO DE CUELLO
+        // =========================================================================
+        const EPOCH_BASE_MS = Date.UTC(2026, 0, 1); // 1 de Enero 2026
+        const MS_PER_DAY = 86400000;
+
+        let activeDate = new Date();
+        activeDate.setHours(0, 0, 0, 0);
+
+        let activeMode = "activation"; // 'activation' | 'workout'
+        const STORAGE_KEY = "rutina_roja_fucsia_v1";
+        let logsStore = {};
+
+        function loadLogs() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) logsStore = JSON.parse(raw);
+            } catch (e) {
+                console.warn("Error leyendo localStorage:", e);
+            }
+        }
+
+        function saveLogs() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(logsStore));
+            } catch (e) {
+                console.warn("Error guardando localStorage:", e);
+            }
+        }
+
+        function getDateKey(dateObj) {
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+            const d = String(dateObj.getDate()).padStart(2, "0");
+            return `${y}-${m}-${d}`;
+        }
+
+        function getDayLog(dateObj) {
+            const key = getDateKey(dateObj);
+            if (!logsStore[key]) {
+                logsStore[key] = {
+                    checks: {},
+                    sets: {} // exId -> [ { reps: "", weight: "", done: false }, ... ]
+                };
+            }
+            return logsStore[key];
+        }
+
+        function isNeckDay(dateObj) {
+            const utcSelected = Date.UTC(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+            const diffDays = Math.floor((utcSelected - EPOCH_BASE_MS) / MS_PER_DAY);
+            return Math.abs(diffDays) % 2 === 0;
+        }
+
+        function getMondayBasedDayIndex(dateObj) {
+            const jsDay = dateObj.getDay(); // 0=Dom, 1=Lun...
+            return jsDay === 0 ? 6 : jsDay - 1;
+        }
+
+        function isSameCalendarDay(d1, d2) {
+            return d1.getFullYear() === d2.getFullYear() &&
+                   d1.getMonth() === d2.getMonth() &&
+                   d1.getDate() === d2.getDate();
+        }
+
+        // =========================================================================
+        // 4. NAVEGACIÓN Y PESTAÑAS
+        // =========================================================================
+        function shiftDate(offsetDays) {
+            activeDate = new Date(activeDate.getTime() + offsetDays * MS_PER_DAY);
+            renderApp();
+        }
+
+        function resetToToday() {
+            activeDate = new Date();
+            activeDate.setHours(0, 0, 0, 0);
+            renderApp();
+        }
+
+        function selectWeekday(targetMondayIndex) {
+            const currentMondayIndex = getMondayBasedDayIndex(activeDate);
+            const diff = targetMondayIndex - currentMondayIndex;
+            shiftDate(diff);
+        }
+
+        function switchMode(mode) {
+            activeMode = mode;
+            renderApp();
+        }
+
+        // =========================================================================
+        // 5. RENDERIZADO GENERAL
+        // =========================================================================
+        function renderApp() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const isToday = isSameCalendarDay(activeDate, today);
+
+            // Cabecera fecha
+            const formatter = new Intl.DateTimeFormat("es-ES", { weekday: "short", day: "numeric", month: "short" });
+            document.getElementById("current-date-label").textContent = formatter.format(activeDate);
+            const todayInd = document.getElementById("today-indicator");
+            if (isToday) {
+                todayInd.textContent = "HOY · Real";
+                todayInd.className = "block text-[10px] text-pink-400 font-bold";
+            } else {
+                todayInd.textContent = "Volver a hoy";
+                todayInd.className = "block text-[10px] text-red-400 font-semibold underline";
+            }
+
+            // Barra de días Lunes a Domingo
+            const dayIdx = getMondayBasedDayIndex(activeDate);
+            const tabsContainer = document.getElementById("day-tabs");
+            tabsContainer.innerHTML = "";
+
+            STRENGTH_ROUTINE.forEach((dayObj, idx) => {
+                const btnDate = new Date(activeDate.getTime() + (idx - dayIdx) * MS_PER_DAY);
+                const neckOnThatDate = isNeckDay(btnDate);
+                const selected = idx === dayIdx;
+
+                const btn = document.createElement("button");
+                btn.className = `flex-1 min-w-[68px] py-2 px-2 rounded-xl border text-center transition-all ${
+                    selected
+                        ? "bg-gradient-to-r from-red-600 to-pink-600 border-red-500 text-white shadow-md shadow-red-600/30"
+                        : "bg-[#121215] border-[#27272a] text-zinc-400 hover:text-zinc-100 hover:border-zinc-600"
+                }`;
+                btn.innerHTML = `
+                    <span class="block text-xs font-extrabold">${dayObj.short}</span>
+                    <span class="block text-[10px] mt-0.5 ${selected ? "text-pink-100" : "text-zinc-500"}">
+                        ${btnDate.getDate()} ${neckOnThatDate ? "· 🦴" : ""}
+                    </span>
+                `;
+                btn.onclick = () => selectWeekday(idx);
+                tabsContainer.appendChild(btn);
+            });
+
+            // Tarjeta superior del día
+            const currentDayObj = STRENGTH_ROUTINE[dayIdx];
+            document.getElementById("selected-day-title").textContent = `${currentDayObj.name} ${activeDate.getDate()}`;
+            document.getElementById("selected-day-focus").textContent = currentDayObj.focus;
+            document.getElementById("day-subtitle-note").textContent = currentDayObj.note;
+
+            // Badge Cuello Interdiario
+            const neckToday = isNeckDay(activeDate);
+            const neckBadge = document.getElementById("neck-status-badge");
+            if (neckToday) {
+                neckBadge.className = "shrink-0 px-3.5 py-2 rounded-xl border border-red-500/40 bg-red-500/10 text-red-300 flex items-center gap-2";
+                neckBadge.innerHTML = `
+                    <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
+                    <div>
+                        <span class="block text-[11px] font-extrabold uppercase tracking-wide text-red-300">HOY TOCA CUELLO</span>
+                        <span class="block text-[10px] text-red-400/80">Disco Ant/Post · 2×15-20</span>
+                    </div>
+                `;
+            } else {
+                neckBadge.className = "shrink-0 px-3.5 py-2 rounded-xl border border-[#27272a] bg-zinc-900/80 text-zinc-400 flex items-center gap-2";
+                neckBadge.innerHTML = `
+                    <span class="w-2.5 h-2.5 rounded-full bg-zinc-600"></span>
+                    <div>
+                        <span class="block text-[11px] font-bold uppercase tracking-wide text-zinc-300">DESCANSO DE CUELLO</span>
+                        <span class="block text-[10px] text-zinc-500">Toca mañana (interdiario)</span>
+                    </div>
+                `;
+            }
+
+            // Pestañas Opción 1 vs Opción 2
+            const tabAct = document.getElementById("tab-activation");
+            const tabWork = document.getElementById("tab-workout");
+
+            if (activeMode === "activation") {
+                tabAct.className = "py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold transition-all flex items-center justify-center gap-1.5 bg-gradient-to-r from-pink-600 to-red-600 text-white shadow-md shadow-pink-600/30";
+                tabWork.className = "py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 text-zinc-400 hover:text-white";
+                renderActivationView(dayIdx, neckToday);
+            } else {
+                tabWork.className = "py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold transition-all flex items-center justify-center gap-1.5 bg-gradient-to-r from-red-600 to-pink-600 text-white shadow-md shadow-red-600/30";
+                tabAct.className = "py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 text-zinc-400 hover:text-white";
+                renderStrengthView(currentDayObj);
+            }
+        }
+
+        // =========================================================================
+        // 6. RENDERIZADO OPCIÓN 1: HÁBITOS, ACTIVACIÓN Y POSTURA
+        // =========================================================================
+        function renderActivationView(dayIdx, neckToday) {
+            const container = document.getElementById("main-content-area");
+            const dayLog = getDayLog(activeDate);
+            const isVacuumDay = dayIdx === 0 || dayIdx === 2 || dayIdx === 4; // Lunes, Miércoles, Viernes
+
+            let html = "";
+
+            // Stomach Vacuum en Ayunas (Lunes, Miércoles, Viernes)
+            if (isVacuumDay) {
+                const vacChecked = !!dayLog.checks["act-vacuum"];
+                html += `
+                    <div class="bg-[#121215] border border-red-500/40 rounded-2xl p-4 space-y-3 shadow-lg shadow-red-500/10">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="px-2.5 py-0.5 rounded-md bg-red-500/15 text-red-400 text-[11px] font-extrabold uppercase tracking-wider">
+                                En Ayunas · Lun / Mié / Vie
+                            </span>
+                            <button onclick="setQuickTimer(15, 'Stomach Vacuum 15s', true)" class="px-2.5 py-1 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 text-xs font-bold transition">
+                                ⏱ Sostén 15s
+                            </button>
+                        </div>
+                        <div onclick="toggleActivationCheck('act-vacuum')" class="cursor-pointer flex items-center justify-between gap-3 p-3 rounded-xl border transition ${
+                            vacChecked ? "bg-red-950/30 border-red-500/40" : "bg-zinc-900/70 border-[#27272a] hover:border-zinc-600"
+                        }">
+                            <div>
+                                <h3 class="text-sm font-extrabold ${vacChecked ? "line-through text-zinc-500" : "text-white"}">
+                                    Stomach Vacuum en ayunas
+                                </h3>
+                                <p class="text-xs text-zinc-400 mt-0.5">3–5 series × 10–15 s de sostén (columna neutra)</p>
+                            </div>
+                            <div class="w-6 h-6 rounded-lg flex items-center justify-center border shrink-0 ${
+                                vacChecked ? "bg-red-600 border-red-500 text-white font-extrabold" : "border-zinc-600 bg-zinc-950 text-transparent"
+                            }">✓</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Carga de Cuello Interdiaria
+            if (neckToday) {
+                html += renderTwoSetExerciseCard({
+                    id: "act-neck-load",
+                    name: "Carga de Cuello con disco (Anterior y Posterior)",
+                    target: "2 × 15–20 reps · 1–2 RIR (Interdiario)",
+                    tip: "Control estricto sin tirones. Haz 2 series para flexión anterior y 2 para extensión posterior.",
+                    isNeckCard: true
+                });
+            }
+
+            // Hábitos Diarios: Cara
+            html += `
+                <div class="bg-[#121215] border border-[#27272a] rounded-2xl p-4 space-y-2.5">
+                    <div class="flex items-center justify-between pb-1 border-b border-[#27272a]">
+                        <h3 class="text-xs font-extrabold uppercase tracking-wider text-pink-400">Hábitos Diarios · Cara y Tono Facial</h3>
+                        <span class="text-[11px] text-zinc-500">Rutina diaria</span>
+                    </div>
+                    <div class="space-y-2">
+                        ${DAILY_ACTIVATION.face.map(item => renderChecklistRow(item, !!dayLog.checks[item.id])).join("")}
+                    </div>
+                </div>
+            `;
+
+            // Hábitos Diarios: Postura, Espalda y Hombros
+            html += `
+                <div class="bg-[#121215] border border-[#27272a] rounded-2xl p-4 space-y-2.5">
+                    <div class="flex items-center justify-between pb-1 border-b border-[#27272a]">
+                        <h3 class="text-xs font-extrabold uppercase tracking-wider text-pink-400">Postura, Espalda y Hombros</h3>
+                        <span class="text-[11px] text-zinc-500">Movilidad</span>
+                    </div>
+                    <div class="space-y-2">
+                        ${DAILY_ACTIVATION.posture.map(item => renderChecklistRow(item, !!dayLog.checks[item.id])).join("")}
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        function renderChecklistRow(item, isChecked) {
+            const timerBtn = item.timerSec
+                ? `<button onclick="event.stopPropagation(); setQuickTimer(${item.timerSec}, '${item.name}', true)" class="px-2 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-pink-400 text-[11px] font-bold border border-zinc-700 shrink-0 transition">
+                    ⏱ ${item.timerSec}s
+                   </button>`
+                : "";
+
+            return `
+                <div onclick="toggleActivationCheck('${item.id}')" class="cursor-pointer flex items-center justify-between gap-3 p-3 rounded-xl border transition ${
+                    isChecked
+                        ? "bg-pink-950/20 border-pink-500/30"
+                        : "bg-zinc-900/60 border-[#27272a] hover:border-zinc-600"
+                }">
+                    <div class="min-w-0">
+                        <p class="text-sm font-bold leading-snug ${isChecked ? "line-through text-zinc-500" : "text-zinc-100"}">
+                            ${item.name}
+                        </p>
+                        <p class="text-xs text-zinc-400 mt-0.5">${item.meta}</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        ${timerBtn}
+                        <div class="w-6 h-6 rounded-lg flex items-center justify-center border transition ${
+                            isChecked
+                                ? "bg-pink-600 border-pink-500 text-white font-extrabold"
+                                : "border-zinc-600 bg-zinc-950 text-transparent"
+                        }">✓</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleActivationCheck(itemId) {
+            const dayLog = getDayLog(activeDate);
+            if (dayLog.checks[itemId]) {
+                delete dayLog.checks[itemId];
+            } else {
+                dayLog.checks[itemId] = true;
+            }
+            saveLogs();
+            renderApp();
+        }
+
+        // =========================================================================
+        // 7. RENDERIZADO OPCIÓN 2: RUTINA DE FUERZA (MÉTODO DE 2 SERIES)
+        // =========================================================================
+        function renderStrengthView(dayObj) {
+            const container = document.getElementById("main-content-area");
+
+            if (dayObj.isRestDay) {
+                container.innerHTML = `
+                    <div class="bg-[#121215] border border-[#27272a] rounded-2xl p-6 text-center space-y-3 shadow-xl">
+                        <div class="w-12 h-12 rounded-2xl bg-pink-500/10 border border-pink-500/30 text-pink-400 flex items-center justify-center mx-auto text-xl">
+                            🌸
+                        </div>
+                        <h3 class="text-base font-extrabold text-white">Domingo · Descanso Activo</h3>
+                        <p class="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto leading-relaxed">
+                            Hoy no hay pesas. Disfruta de una caminata suave de 20–30 minutos, haz tus hábitos faciales y posturales de la Opción 1 y descansa para recuperar al 100%.
+                        </p>
+                        <div class="pt-2 flex justify-center gap-2">
+                            <button onclick="switchMode('activation')" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-500 hover:to-pink-500 text-white text-xs font-extrabold transition shadow-md shadow-red-600/30">
+                                Ver Hábitos de Activación
+                            </button>
+                            <button onclick="setQuickTimer(1200, 'Caminata 20 min', true)" class="px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-[#27272a] text-zinc-300 text-xs font-bold transition">
+                                ⏱ Caminata 20m
+                            </button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = dayObj.exercises.map(ex => renderTwoSetExerciseCard(ex)).join("");
+            container.innerHTML = html;
+        }
+
+        // Tarjeta de Ejercicio con exactamente 2 series por defecto (Serie 1 y Serie 2) + Peso/Mochila (kg) + Botón Serie Extra
+        function renderTwoSetExerciseCard(ex) {
+            const dayLog = getDayLog(activeDate);
+
+            if (!dayLog.sets[ex.id]) {
+                dayLog.sets[ex.id] = [
+                    { reps: "", weight: "", done: false },
+                    { reps: "", weight: "", done: false }
+                ];
+            }
+            const setsArr = dayLog.sets[ex.id];
+            const allDone = setsArr.length > 0 && setsArr.every(s => s.done);
+
+            const setsHtml = setsArr.map((setObj, sIdx) => `
+                <div class="flex items-center gap-2 p-2.5 rounded-xl border transition ${
+                    setObj.done
+                        ? "bg-red-950/20 border-red-500/40"
+                        : "bg-zinc-900/80 border-[#27272a]"
+                }">
+                    <span class="text-xs font-extrabold text-zinc-400 w-14 shrink-0">Serie ${sIdx + 1}</span>
+                    
+                    <div class="flex-1 flex items-center gap-1.5">
+                        <input
+                            type="number"
+                            inputmode="numeric"
+                            placeholder="Reps"
+                            value="${setObj.reps}"
+                            onchange="updateSetField('${ex.id}', ${sIdx}, 'reps', this.value)"
+                            class="w-full bg-zinc-950 border border-[#27272a] focus:border-red-500 rounded-lg px-2.5 py-1.5 text-xs font-bold text-white placeholder-zinc-600 outline-none text-center"
+                        />
+                        <input
+                            type="text"
+                            placeholder="Mochila/Kg"
+                            value="${setObj.weight}"
+                            onchange="updateSetField('${ex.id}', ${sIdx}, 'weight', this.value)"
+                            class="w-full bg-zinc-950 border border-[#27272a] focus:border-red-500 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-300 placeholder-zinc-600 outline-none text-center"
+                        />
+                    </div>
+
+                    <button
+                        onclick="toggleSetDone('${ex.id}', ${sIdx}, 60)"
+                        class="w-8 h-8 rounded-lg flex items-center justify-center border font-extrabold text-xs transition shrink-0 ${
+                            setObj.done
+                                ? "bg-red-600 border-red-500 text-white"
+                                : "bg-zinc-950 border-zinc-700 hover:border-pink-500 text-zinc-500"
+                        }"
+                        title="Marcar serie completada"
+                    >
+                        ✓
+                    </button>
+                </div>
+            `).join("");
+
+            return `
+                <article class="bg-[#121215] border ${allDone ? "border-red-500/40" : "border-[#27272a]"} rounded-2xl p-4 space-y-3 transition shadow-md">
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <h4 class="text-sm sm:text-base font-extrabold leading-snug ${allDone ? "text-red-400" : "text-white"}">
+                                ${ex.name}
+                            </h4>
+                            <p class="text-xs font-semibold text-pink-400 mt-0.5">${ex.target}</p>
+                        </div>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <button onclick="setQuickTimer(60, 'Descanso 60s', true)" class="px-2 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-[#27272a] text-pink-400 text-[11px] font-bold transition">
+                                ⏱ 60s
+                            </button>
+                            <button onclick="toggleExerciseTip('tip-${ex.id}')" class="px-2 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-[#27272a] text-zinc-400 hover:text-zinc-200 text-[11px] font-semibold transition">
+                                Técnica
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="tip-${ex.id}" class="hidden p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800 text-xs text-zinc-300 leading-relaxed">
+                        ${ex.tip}
+                    </div>
+
+                    <!-- 2 Series Principales -->
+                    <div class="space-y-2">
+                        ${setsHtml}
+                    </div>
+
+                    <!-- Botón Serie Extra -->
+                    <div class="flex items-center justify-between pt-0.5">
+                        <button onclick="addExtraSet('${ex.id}')" class="text-[11px] font-semibold text-zinc-500 hover:text-pink-400 transition">
+                            + Añadir serie extra
+                        </button>
+                        ${setsArr.length > 2 ? `<button onclick="removeExtraSet('${ex.id}')" class="text-[11px] font-semibold text-zinc-600 hover:text-red-400 transition">Quitar extra</button>` : ""}
+                    </div>
+                </article>
+            `;
+        }
+
+        function updateSetField(exId, setIdx, field, val) {
+            const dayLog = getDayLog(activeDate);
+            if (dayLog.sets[exId] && dayLog.sets[exId][setIdx]) {
+                dayLog.sets[exId][setIdx][field] = val;
+                saveLogs();
+            }
+        }
+
+        function toggleSetDone(exId, setIdx, defaultRestSec) {
+            const dayLog = getDayLog(activeDate);
+            if (!dayLog.sets[exId]) return;
+            const current = dayLog.sets[exId][setIdx].done;
+            dayLog.sets[exId][setIdx].done = !current;
+            saveLogs();
+
+            if (!current && !timerRunning) {
+                setQuickTimer(defaultRestSec, "Descanso", false);
+            }
+            renderApp();
+        }
+
+        function addExtraSet(exId) {
+            const dayLog = getDayLog(activeDate);
+            if (dayLog.sets[exId]) {
+                dayLog.sets[exId].push({ reps: "", weight: "", done: false });
+                saveLogs();
+                renderApp();
+            }
+        }
+
+        function removeExtraSet(exId) {
+            const dayLog = getDayLog(activeDate);
+            if (dayLog.sets[exId] && dayLog.sets[exId].length > 2) {
+                dayLog.sets[exId].pop();
+                saveLogs();
+                renderApp();
+            }
+        }
+
+        function toggleExerciseTip(elId) {
+            const el = document.getElementById(elId);
+            if (el) el.classList.toggle("hidden");
+        }
+
+        function resetDayLogs() {
+            const key = getDateKey(activeDate);
+            delete logsStore[key];
+            saveLogs();
+            renderApp();
+        }
+
+        // =========================================================================
+        // 8. TEMPORIZADOR FLOTANTE (ESTÉTICA ROJA Y FUCSIA)
+        // =========================================================================
+        let timerSeconds = 30;
+        let timerInterval = null;
+        let timerRunning = false;
+
+        function formatClock(sec) {
+            const m = Math.floor(sec / 60).toString().padStart(2, "0");
+            const s = (sec % 60).toString().padStart(2, "0");
+            return `${m}:${s}`;
+        }
+
+        function updateTimerDisplay(statusLabel) {
+            document.getElementById("timer-display").textContent = formatClock(timerSeconds);
+            if (statusLabel) {
+                document.getElementById("timer-status-text").textContent = statusLabel;
+            }
+            const playBtn = document.getElementById("timer-play-btn");
+            const iconBox = document.getElementById("timer-badge-icon");
+
+            if (timerRunning) {
+                playBtn.textContent = "Pausar";
+                playBtn.className = "ml-1 px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-extrabold transition";
+                iconBox.classList.add("timer-running", "border-red-500/50");
+            } else {
+                playBtn.textContent = "Iniciar";
+                playBtn.className = "ml-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-500 hover:to-pink-500 text-white text-xs font-extrabold transition shadow-md shadow-red-600/30";
+                iconBox.classList.remove("timer-running", "border-red-500/50");
+            }
+        }
+
+        function setQuickTimer(sec, label, autoStart = true) {
+            clearInterval(timerInterval);
+            timerRunning = false;
+            timerSeconds = sec;
+            updateTimerDisplay(label);
+            if (autoStart) {
+                startTimer();
+            }
+        }
+
+        function startTimer() {
+            if (timerSeconds <= 0) timerSeconds = 30;
+            timerRunning = true;
+            updateTimerDisplay("En curso");
+            timerInterval = setInterval(() => {
+                timerSeconds--;
+                if (timerSeconds <= 0) {
+                    timerSeconds = 0;
+                    clearInterval(timerInterval);
+                    timerRunning = false;
+                    updateTimerDisplay("¡LISTO!");
+                    triggerFinishAlert();
+                } else {
+                    document.getElementById("timer-display").textContent = formatClock(timerSeconds);
+                }
+            }, 1000);
+        }
+
+        function toggleTimer() {
+            if (timerRunning) {
+                clearInterval(timerInterval);
+                timerRunning = false;
+                updateTimerDisplay("Pausado");
+            } else {
+                startTimer();
+            }
+        }
+
+        function triggerFinishAlert() {
+            const display = document.getElementById("timer-display");
+            display.classList.add("text-pink-400");
+            setTimeout(() => display.classList.remove("text-pink-400"), 2000);
+
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                [0, 0.22].forEach(delay => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = "triangle";
+                    osc.frequency.setValueAtTime(880, ctx.currentTime + delay);
+                    gain.gain.setValueAtTime(0.2, ctx.currentTime + delay);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.18);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(ctx.currentTime + delay);
+                    osc.stop(ctx.currentTime + delay + 0.18);
+                });
+            } catch (e) {}
+        }
+
+        // =========================================================================
+        // 9. INICIALIZACIÓN
+        // =========================================================================
+        window.onload = function () {
+            loadLogs();
+            activeDate = new Date();
+            activeDate.setHours(0, 0, 0, 0);
+
+            // Si hoy es domingo, abrir por defecto en Activación
+            if (getMondayBasedDayIndex(activeDate) === 6) {
+                activeMode = "activation";
+            }
+
+            renderApp();
+            updateTimerDisplay("Listo");
+        };
+    </script>
+</body>
+</html>

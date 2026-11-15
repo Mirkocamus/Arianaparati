@@ -1,0 +1,6 @@
+{
+  "name": "Ritmo Hogar — Rutina & Activación",
+  "description": "Rutina de fuerza en casa con mochila, hábitos diarios de activación postural y seguimiento interdiario de cuello.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
